@@ -1,7 +1,8 @@
-# Config File for BRaVa Pilot Study Common Variant Conditioninal Analysis Pipeline
+# Config File for BRaVa Pilot Study Common Variant Conditional Analysis Pipeline
 
 # Prerequisite
 list_of_vcf_files: "vcf_list.txt"
+plink_files: "plink_files.txt"
 list_of_model_files: "model_file_list.txt"
 variance_ratio_file: "variance_file_list.txt"
 sparse_matrix: "test_files/test.sparseGRM.mtx"

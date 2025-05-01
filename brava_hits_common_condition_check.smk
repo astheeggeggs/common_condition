@@ -154,6 +154,27 @@ rule spa_tests_conditional:
         done
         """
 
+rule spa_tests_conditional_plink:
+    input:
+        plink_files=lambda wildcards: [pf for pf in config["plink_files"] if wildcards.trait in pf],
+        model_file=lambda wildcards: [mf for mf in model_files if wildcards.trait in mf],
+        variance_file=lambda wildcards: [vf for vf in variance_files if wildcards.trait in vf],
+        sparse_matrix=sparse_matrix,
+        group_file="run_files/{gene}_group_file.txt",
+        conditioning_variants="run_files/{gene}_{distance}_{maf}_string.txt"
+    output:
+        "plink_outputs/{gene_trait}_{distance}_plink_results.txt"
+    params:
+        min_mac=min_mac,
+        annotations_to_include=annotations_to_include
+    shell:
+        """
+        for plink_file in {input.plink_files}; do
+            bash scripts/plink_step2_conditioning_check.sh \
+                $plink_file {output} {params.min_mac} {input.model_file} {input.variance_file} {input.sparse_matrix} {input.group_file} {params.annotations_to_include} {input.conditioning_variants}
+        done
+        """
+
 rule combine_results:
     input:
         expand("saige_outputs/{gene_trait}_{distance}_saige_results_{maf}.txt",
