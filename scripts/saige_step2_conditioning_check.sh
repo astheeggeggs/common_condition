@@ -17,6 +17,11 @@ echo -e "VCF=$VCF\nOUT=$OUT\nMIN_MAC=$MIN_MAC\nMODELFILE=$MODELFILE\nVARIANCERAT
 
 TMPFILE=$(mktemp)
 
+FILTERED_SAMPLE_IDS="${SPARSEGRMID%.txt}.filtered.txt"
+if [ ! -f "${FILTERED_SAMPLE_IDS}" ]; then
+    grep -F -f <(bcftools query -l "${VCF}") "${SPARSEGRMID}" > "${FILTERED_SAMPLE_IDS}"
+fi
+
 # Run the step2_SPAtests.R and redirect output to TMPFILE
 step2_SPAtests.R \
         --vcfFile=${VCF} \
@@ -28,6 +33,7 @@ step2_SPAtests.R \
         --varianceRatioFile=${VARIANCERATIO} \
         --sparseGRMFile=${SPARSEGRM} \
         --sparseGRMSampleIDFile=${SPARSEGRMID} \
+        --subSampleFile=${FILTERED_SAMPLE_IDS} \
         --LOCO=FALSE \
         --is_Firth_beta=TRUE \
         --pCutoffforFirth=0.10 \
