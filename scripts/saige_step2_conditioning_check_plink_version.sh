@@ -10,19 +10,14 @@ SPARSEGRM="$6"
 SPARSEGRMID="${SPARSEGRM}.sampleIDs.txt"
 GROUPFILE="$7"
 ANNOTATIONS="$8"
-CONDITION_RAW=$(cat "${9}")
+CONDITION=$(cat "${9}")
 
-echo -e "PLINKFILE=$PLINKFILE\nOUT=$OUT\nMIN_MAC=$MIN_MAC\nMODELFILE=$MODELFILE\nVARIANCERATIO=$VARIANCERATIO\nSPARSEGRM=$SPARSEGRM\nSPARSEGRMID=$SPARSEGRMID\nGROUPFILE=$GROUPFILE\nANNOTATIONS=$ANNOTATIONS\nCONDITION=$CONDITION_RAW"
+echo -e "PLINKFILE=$PLINKFILE\nOUT=$OUT\nMIN_MAC=$MIN_MAC\nMODELFILE=$MODELFILE\nVARIANCERATIO=$VARIANCERATIO\nSPARSEGRM=$SPARSEGRM\nSPARSEGRMID=$SPARSEGRMID\nGROUPFILE=$GROUPFILE\nANNOTATIONS=$ANNOTATIONS\nCONDITION=$CONDITION"
 
-# Strip 'chr' from chromosome names in GROUPFILE for PLINK format
-GROUPFILE_TMP=$(mktemp)
-sed 's/chr//g' "$GROUPFILE" > "$GROUPFILE_TMP"
-
-# Remove 'chr' from CONDITION string if not empty
-if [[ -n "$CONDITION_RAW" ]]; then
-    CONDITION=$(echo "$CONDITION_RAW" | sed 's/chr//g')
-else
-    CONDITION=""
+# Create a filtered sample list based on the .fam file (second column)
+FILTERED_SAMPLE_IDS="${SPARSEGRMID%.txt}.filtered.txt"
+if [ ! -f "${FILTERED_SAMPLE_IDS}" ]; then
+    cut -d' ' -f2 "${PLINKFILE}.fam" | grep -F -f - "${SPARSEGRMID}" > "${FILTERED_SAMPLE_IDS}"
 fi
 
 # Temp file for output
@@ -39,13 +34,14 @@ step2_SPAtests.R \
         --varianceRatioFile=${VARIANCERATIO} \
         --sparseGRMFile=${SPARSEGRM} \
         --sparseGRMSampleIDFile=${SPARSEGRMID} \
+        --subSampleFile=${FILTERED_SAMPLE_IDS} \
         --LOCO=FALSE \
         --is_Firth_beta=TRUE \
         --pCutoffforFirth=0.10 \
         --is_output_moreDetails=TRUE \
         --is_fastTest=TRUE \
         --SAIGEOutputFile=${TMPFILE} \
-        --groupFile=$GROUPFILE_TMP \
+        --groupFile=$GROUPFILE \
         --annotation_in_groupTest=$ANNOTATIONS \
         --is_output_markerList_in_groupTest=TRUE \
         --is_single_in_groupTest=TRUE \
@@ -61,5 +57,3 @@ step2_SPAtests.R \
 # Ensure output exists for Snakemake
 touch "${OUT}"
 
-# Clean up
-rm -f "${TMPFILE}" "$GROUPFILE_TMP"
